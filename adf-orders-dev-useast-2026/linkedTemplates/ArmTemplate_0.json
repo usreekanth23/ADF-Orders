@@ -402,14 +402,7 @@
 					{
 						"name": "Copy Customers Landing to Raw",
 						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Copy Order Items Landing to Raw",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.00:10:00",
 							"retry": 0,
@@ -460,14 +453,7 @@
 					{
 						"name": "Copy Order Items Landing to Raw",
 						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Copy Products Landing to Raw",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.00:10:00",
 							"retry": 0,
@@ -528,14 +514,7 @@
 					{
 						"name": "Copy Products Landing to Raw",
 						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Copy stores from Landing to Raw",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.00:10:00",
 							"retry": 0,
@@ -585,14 +564,7 @@
 					{
 						"name": "Copy stores from Landing to Raw",
 						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Copy Orders from Landing to Raw",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
+						"dependsOn": [],
 						"policy": {
 							"timeout": "0.00:10:00",
 							"retry": 0,
