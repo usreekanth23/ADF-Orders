@@ -1,0 +1,20 @@
+{
+	"name": "ds_raw_orders",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_dl_orders_raw",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "orders.json",
+				"fileSystem": "raw"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
