@@ -13,7 +13,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "orders.json",
+				"fileName": "orders.parquet",
 				"fileSystem": "raw"
 			},
 			"compressionCodec": "snappy"
