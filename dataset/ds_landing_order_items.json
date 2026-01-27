@@ -21,6 +21,27 @@
 			"firstRowAsHeader": true,
 			"quoteChar": "\""
 		},
-		"schema": []
+		"schema": [
+			{
+				"name": "ORDER_ID",
+				"type": "String"
+			},
+			{
+				"name": "LINE_ITEM_ID",
+				"type": "String"
+			},
+			{
+				"name": "PRODUCT_ID",
+				"type": "String"
+			},
+			{
+				"name": "UNIT_PRICE",
+				"type": "String"
+			},
+			{
+				"name": "QUANTITY",
+				"type": "String"
+			}
+		]
 	}
 }

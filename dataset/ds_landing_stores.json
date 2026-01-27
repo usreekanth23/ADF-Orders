@@ -17,6 +17,25 @@
 				"container": "landing"
 			}
 		},
-		"schema": {}
+		"schema": {
+			"type": "object",
+			"properties": {
+				"STORE_ID": {
+					"type": "string"
+				},
+				"STORE_NAME": {
+					"type": "string"
+				},
+				"WEB_ADDRESS": {
+					"type": "string"
+				},
+				"LATITUDE": {
+					"type": "string"
+				},
+				"LONGITUDE": {
+					"type": "string"
+				}
+			}
+		}
 	}
 }
