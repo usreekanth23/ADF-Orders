@@ -1,0 +1,23 @@
+{
+	"name": "ds_structured_stores",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_dl_orders_raw",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "04 Structured"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "stores",
+				"fileSystem": "structured"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}
