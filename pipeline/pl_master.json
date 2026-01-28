@@ -1,0 +1,89 @@
+{
+	"name": "pl_master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Landing2Raw",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_landing_to_raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Raw2Cleansed",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Landing2Raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_raw_to_cleansed",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "CleansedToStructured",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Raw2Cleansed",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_cleansed_to_structured",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "StructuredToAnalytics",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CleansedToStructured",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"annotations": []
+	}
+}
