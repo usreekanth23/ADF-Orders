@@ -80,6 +80,10 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_structured_to_analytics",
+						"type": "PipelineReference"
+					},
 					"waitOnCompletion": true
 				}
 			}
