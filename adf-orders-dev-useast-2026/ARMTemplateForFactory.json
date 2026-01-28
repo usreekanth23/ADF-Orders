@@ -1923,6 +1923,48 @@
 				"[concat(variables('factoryId'), '/datasets/ds_analytics_product_orders_monthly')]",
 				"[concat(variables('factoryId'), '/datasets/ds_analytics_store_orders_monthly')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ScheduleMasterPipelineOrders_pl_master')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_master",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Week",
+						"interval": 2,
+						"startTime": "2026-01-28T20:52:00",
+						"endTime": "2026-02-03T20:52:00",
+						"timeZone": "Eastern Standard Time",
+						"schedule": {
+							"minutes": [
+								30
+							],
+							"hours": [
+								12
+							],
+							"weekDays": [
+								"Monday"
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_master')]"
+			]
 		}
 	]
 }
