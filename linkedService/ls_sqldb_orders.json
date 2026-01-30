@@ -1,0 +1,17 @@
+{
+	"name": "ls_sqldb_orders",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "sqlsrvr-orders-dev.database.windows.net",
+			"database": "sqldb-orders-dev",
+			"encrypt": "mandatory",
+			"trustServerCertificate": true,
+			"authenticationType": "SQL",
+			"userName": "sreekanth",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDE4M0Y5N0Y3LTQwMDMtNEM0RS1BQTEyLTRDMkFCNjhEMzA2MV9hNDJjYzU5NS00ZmZmLTRjMzQtOTVhZC02YWUwNjIwYzkwZWEiDQp9"
+		}
+	}
+}
