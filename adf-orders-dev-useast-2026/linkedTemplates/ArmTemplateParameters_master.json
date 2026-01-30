@@ -8,11 +8,23 @@
 		"ls_dl_orders_raw_accountKey": {
 			"value": ""
 		},
+		"ls_sqldb_orders_password": {
+			"value": ""
+		},
 		"ls_st_orders_landing_connectionString": {
 			"value": ""
 		},
 		"ls_dl_orders_raw_properties_typeProperties_url": {
 			"value": "https://dlordersadf2026.dfs.core.windows.net/"
+		},
+		"ls_sqldb_orders_properties_typeProperties_server": {
+			"value": "sqlsrvr-orders-dev.database.windows.net"
+		},
+		"ls_sqldb_orders_properties_typeProperties_database": {
+			"value": "sqldb-orders-dev"
+		},
+		"ls_sqldb_orders_properties_typeProperties_userName": {
+			"value": "sreekanth"
 		},
 		"containerUri": {
 			"value": ""

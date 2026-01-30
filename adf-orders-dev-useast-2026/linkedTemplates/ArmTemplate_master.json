@@ -11,6 +11,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'accountKey' of 'ls_dl_orders_raw'"
 		},
+		"ls_sqldb_orders_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_sqldb_orders'"
+		},
 		"ls_st_orders_landing_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'ls_st_orders_landing'"
@@ -18,6 +22,18 @@
 		"ls_dl_orders_raw_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
+		},
+		"ls_sqldb_orders_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sqlsrvr-orders-dev.database.windows.net"
+		},
+		"ls_sqldb_orders_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sqldb-orders-dev"
+		},
+		"ls_sqldb_orders_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sreekanth"
 		},
 		"containerUri": {
 			"type": "string",
@@ -49,11 +65,23 @@
 					"ls_dl_orders_raw_accountKey": {
 						"value": "[parameters('ls_dl_orders_raw_accountKey')]"
 					},
+					"ls_sqldb_orders_password": {
+						"value": "[parameters('ls_sqldb_orders_password')]"
+					},
 					"ls_st_orders_landing_connectionString": {
 						"value": "[parameters('ls_st_orders_landing_connectionString')]"
 					},
 					"ls_dl_orders_raw_properties_typeProperties_url": {
 						"value": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]"
+					},
+					"ls_sqldb_orders_properties_typeProperties_server": {
+						"value": "[parameters('ls_sqldb_orders_properties_typeProperties_server')]"
+					},
+					"ls_sqldb_orders_properties_typeProperties_database": {
+						"value": "[parameters('ls_sqldb_orders_properties_typeProperties_database')]"
+					},
+					"ls_sqldb_orders_properties_typeProperties_userName": {
+						"value": "[parameters('ls_sqldb_orders_properties_typeProperties_userName')]"
 					}
 				}
 			},
