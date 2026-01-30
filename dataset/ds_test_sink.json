@@ -5,12 +5,27 @@
 			"referenceName": "ls_dl_orders_raw",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"pSinkFolderPath": {
+				"type": "String"
+			},
+			"pSinkFileName": {
+				"type": "String"
+			}
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"folderPath": "sink",
+				"fileName": {
+					"value": "@dataset().pSinkFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().pSinkFolderPath",
+					"type": "Expression"
+				},
 				"fileSystem": "test"
 			},
 			"columnDelimiter": ",",

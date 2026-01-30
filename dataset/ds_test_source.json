@@ -5,12 +5,20 @@
 			"referenceName": "ls_dl_orders_raw",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"pSourceFileName": {
+				"type": "String"
+			}
+		},
 		"annotations": [],
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "order_items_2022-01-29.csv",
+				"fileName": {
+					"value": "@dataset().pSourceFileName",
+					"type": "Expression"
+				},
 				"folderPath": "source",
 				"fileSystem": "test"
 			},
