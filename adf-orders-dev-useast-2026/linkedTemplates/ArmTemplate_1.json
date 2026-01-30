@@ -337,184 +337,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEach1",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get Metadata1",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get Metadata1').output.childItems",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Set variable1",
-									"type": "SetVariable",
-									"dependsOn": [],
-									"policy": {
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "vFileName",
-										"value": {
-											"value": "@item().name",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Copy data1",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "Set variable1",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "DelimitedTextSource",
-											"storeSettings": {
-												"type": "AzureBlobFSReadSettings",
-												"recursive": true,
-												"enablePartitionDiscovery": false
-											},
-											"formatSettings": {
-												"type": "DelimitedTextReadSettings"
-											}
-										},
-										"sink": {
-											"type": "DelimitedTextSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "DelimitedTextWriteSettings",
-												"quoteAllText": true,
-												"fileExtension": ".txt"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_test_source",
-											"type": "DatasetReference",
-											"parameters": {
-												"pSourceFileName": {
-													"value": "@variables('vFileName')",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_test_sink",
-											"type": "DatasetReference",
-											"parameters": {
-												"pSinkFolderPath": {
-													"value": "@concat('sink/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-													"type": "Expression"
-												},
-												"pSinkFileName": {
-													"value": "@variables('vFileName')",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					},
-					{
-						"name": "Get Metadata1",
-						"type": "GetMetadata",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"dataset": {
-								"referenceName": "ds_test_source",
-								"type": "DatasetReference",
-								"parameters": {
-									"pSourceFileName": {
-										"value": "@variables('vFileName')",
-										"type": "Expression"
-									}
-								}
-							},
-							"fieldList": [
-								"childItems"
-							],
-							"storeSettings": {
-								"type": "AzureBlobStorageReadSettings",
-								"recursive": true,
-								"enablePartitionDiscovery": false
-							},
-							"formatSettings": {
-								"type": "DelimitedTextReadSettings"
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"variables": {
-					"vFileName": {
-						"type": "String"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_test_source')]",
-				"[concat(variables('factoryId'), '/datasets/ds_test_sink')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/pl_landing_to_raw')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -839,21 +661,21 @@
 					"sinks": [
 						{
 							"dataset": {
-								"referenceName": "ds_structured_orders",
+								"referenceName": "ds_structured_orders_sql",
 								"type": "DatasetReference"
 							},
 							"name": "StructuredOrders"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_structured_stores",
+								"referenceName": "ds_structured_stores_sql",
 								"type": "DatasetReference"
 							},
 							"name": "structuredStores"
 						},
 						{
 							"dataset": {
-								"referenceName": "ds_structured_products",
+								"referenceName": "ds_structured_products_sql",
 								"type": "DatasetReference"
 							},
 							"name": "structuredProducts"
@@ -874,6 +696,9 @@
 						},
 						{
 							"name": "derivedColumn3"
+						},
+						{
+							"name": "alterRow1"
 						}
 					],
 					"scriptLines": [
@@ -947,45 +772,98 @@
 						"     skipDuplicateMapOutputs: true) ~> select1",
 						"CleansedStores derive(UPDATED_TIMESTAMP = currentUTC()) ~> derivedColumn2",
 						"CleansedProducts derive(UPDATED_TIMESTAMP = currentUTC()) ~> derivedColumn3",
-						"select1 sink(allowSchemaDrift: true,",
+						"select1 alterRow(upsertIf(true())) ~> alterRow1",
+						"alterRow1 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
+						"     input(",
+						"          ORDER_ITEM_ID as integer,",
+						"          ORDER_ID as integer,",
+						"          ORDER_DATE as date,",
+						"          CUSTOMER_ID as integer,",
+						"          ORDER_STATUS as string,",
+						"          STORE_ID as integer,",
+						"          PRODUCT_ID as integer,",
+						"          UNIT_PRICE as decimal(18,0),",
+						"          QUANTITY as integer,",
+						"          SUBTOTAL as decimal(18,0),",
+						"          UPDATED_TIMESTAMP as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:true,",
+						"     keys:['ORDER_ITEM_ID'],",
+						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          ORDER_ITEM_ID,",
+						"          ORDER_ID,",
+						"          ORDER_DATE,",
+						"          CUSTOMER_ID,",
+						"          ORDER_STATUS,",
+						"          STORE_ID,",
+						"          PRODUCT_ID,",
+						"          UNIT_PRICE,",
+						"          QUANTITY,",
+						"          SUBTOTAL,",
+						"          UPDATED_TIMESTAMP",
+						"     ),",
 						"     partitionBy('key',",
 						"          0,",
 						"          ORDER_DATE",
-						"     )) ~> StructuredOrders",
+						"     ),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> StructuredOrders",
 						"derivedColumn2 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     partitionFileNames:['stores.parquet'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
+						"     input(",
+						"          STORE_ID as integer,",
+						"          STORE_NAME as string,",
+						"          LATITUDE as decimal(18,0),",
+						"          LONGITUDE as decimal(18,0),",
+						"          UPDATED_TIMESTAMP as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> structuredStores",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> structuredStores",
 						"derivedColumn3 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
-						"     format: 'parquet',",
-						"     partitionFileNames:['products.parquet'],",
-						"     umask: 0022,",
-						"     preCommands: [],",
-						"     postCommands: [],",
+						"     input(",
+						"          PRODUCT_ID as integer,",
+						"          PRODUCT_NAME as string,",
+						"          UNIT_PRICE as decimal(18,0),",
+						"          UPDATED_TIMESTAMP as timestamp",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     truncate:true,",
+						"     format: 'table',",
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> structuredProducts"
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     partitionBy('hash', 1),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> structuredProducts"
 					]
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_structured_orders')]",
-				"[concat(variables('factoryId'), '/datasets/ds_structured_stores')]",
-				"[concat(variables('factoryId'), '/datasets/ds_structured_products')]"
+				"[concat(variables('factoryId'), '/datasets/ds_structured_orders_sql')]",
+				"[concat(variables('factoryId'), '/datasets/ds_structured_stores_sql')]",
+				"[concat(variables('factoryId'), '/datasets/ds_structured_products_sql')]"
 			]
 		},
 		{
