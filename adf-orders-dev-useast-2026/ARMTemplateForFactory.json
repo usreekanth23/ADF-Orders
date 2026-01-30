@@ -25,6 +25,184 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Metadata1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Metadata1').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Set variable1",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "vFileName",
+										"value": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Copy data1",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set variable1",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_test_source",
+											"type": "DatasetReference",
+											"parameters": {
+												"pSourceFileName": {
+													"value": "@variables('vFileName')",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_test_sink",
+											"type": "DatasetReference",
+											"parameters": {
+												"pSinkFolderPath": {
+													"value": "@concat('sink/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+													"type": "Expression"
+												},
+												"pSinkFileName": {
+													"value": "@variables('vFileName')",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Get Metadata1",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "ds_test_source",
+								"type": "DatasetReference",
+								"parameters": {
+									"pSourceFileName": {
+										"value": "@variables('vFileName')",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "DelimitedTextReadSettings"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"vFileName": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_test_source')]",
+				"[concat(variables('factoryId'), '/datasets/ds_test_sink')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_cleansed_to_structured')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -445,6 +623,8 @@
 					{
 						"name": "StructuredToAnalytics",
 						"type": "ExecutePipeline",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
 						"dependsOn": [
 							{
 								"activity": "CleansedToStructured",
@@ -663,7 +843,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "customers",
+						"folderPath": {
+							"value": "@concat('customers/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "cleansed"
 					},
 					"compressionCodec": "snappy"
@@ -691,7 +874,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "order_items",
+						"folderPath": {
+							"value": "@concat('order_items/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "cleansed"
 					},
 					"compressionCodec": "snappy"
@@ -719,7 +905,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "orders",
+						"folderPath": {
+							"value": "@concat('orders/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "cleansed"
 					},
 					"compressionCodec": "snappy"
@@ -747,7 +936,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "products",
+						"folderPath": {
+							"value": "@concat('products/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "cleansed"
 					},
 					"compressionCodec": "snappy"
@@ -775,7 +967,10 @@
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "stores",
+						"folderPath": {
+							"value": "@concat('stores/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
+							"type": "Expression"
+						},
 						"fileSystem": "cleansed"
 					},
 					"compressionCodec": "snappy"
@@ -1031,6 +1226,10 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "customers.json",
+						"folderPath": {
+							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"type": "Expression"
+						},
 						"fileSystem": "raw"
 					}
 				},
@@ -1058,6 +1257,10 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "order_items.txt",
+						"folderPath": {
+							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"type": "Expression"
+						},
 						"fileSystem": "raw"
 					},
 					"columnDelimiter": ",",
@@ -1089,6 +1292,10 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "orders.parquet",
+						"folderPath": {
+							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"type": "Expression"
+						},
 						"fileSystem": "raw"
 					},
 					"compressionCodec": "snappy"
@@ -1117,6 +1324,10 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "products.json",
+						"folderPath": {
+							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"type": "Expression"
+						},
 						"fileSystem": "raw"
 					}
 				},
@@ -1144,6 +1355,10 @@
 					"location": {
 						"type": "AzureBlobFSLocation",
 						"fileName": "stores.json",
+						"folderPath": {
+							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"type": "Expression"
+						},
 						"fileSystem": "raw"
 					}
 				},
@@ -1246,12 +1461,27 @@
 					"referenceName": "ls_dl_orders_raw",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"pSinkFolderPath": {
+						"type": "String"
+					},
+					"pSinkFileName": {
+						"type": "String"
+					}
+				},
 				"annotations": [],
 				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"folderPath": "sink",
+						"fileName": {
+							"value": "@dataset().pSinkFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().pSinkFolderPath",
+							"type": "Expression"
+						},
 						"fileSystem": "test"
 					},
 					"columnDelimiter": ",",
@@ -1274,11 +1504,20 @@
 					"referenceName": "ls_dl_orders_raw",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"pSourceFileName": {
+						"type": "String"
+					}
+				},
 				"annotations": [],
 				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().pSourceFileName",
+							"type": "Expression"
+						},
 						"folderPath": "source",
 						"fileSystem": "test"
 					},
@@ -1518,23 +1757,31 @@
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> StructuredOrders",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('key',",
+						"          0,",
+						"          ORDER_DATE",
+						"     )) ~> StructuredOrders",
 						"derivedColumn2 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     format: 'parquet',",
+						"     partitionFileNames:['stores.parquet'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> structuredStores",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> structuredStores",
 						"derivedColumn3 sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
 						"     format: 'parquet',",
+						"     partitionFileNames:['products.parquet'],",
 						"     umask: 0022,",
 						"     preCommands: [],",
 						"     postCommands: [],",
 						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true) ~> structuredProducts"
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> structuredProducts"
 					]
 				}
 			},
