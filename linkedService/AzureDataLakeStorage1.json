@@ -1,0 +1,14 @@
+{
+	"name": "AzureDataLakeStorage1",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://dlordersadf2026.dfs.core.windows.net/",
+			"credential": {
+				"referenceName": "credential-uami-orders",
+				"type": "CredentialReference"
+			}
+		}
+	}
+}
