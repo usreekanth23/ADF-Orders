@@ -35,6 +35,14 @@
 			"type": "string",
 			"defaultValue": "sreekanth"
 		},
+		"tw_trigger_properties_pipeline1_parameters_pStart": {
+			"type": "string",
+			"defaultValue": "@trigger().outputs.windowStartTime"
+		},
+		"tw_trigger_properties_pipeline1_parameters_pEnd": {
+			"type": "string",
+			"defaultValue": "@trigger().outputs.windowEndTime"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -100,11 +108,37 @@
 				"parameters": {
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
+					},
+					"tw_trigger_properties_pipeline1_parameters_pStart": {
+						"value": "[parameters('tw_trigger_properties_pipeline1_parameters_pStart')]"
+					},
+					"tw_trigger_properties_pipeline1_parameters_pEnd": {
+						"value": "[parameters('tw_trigger_properties_pipeline1_parameters_pEnd')]"
 					}
 				}
 			},
 			"dependsOn": [
 				"[resourceId('Microsoft.Resources/deployments', 'adf-orders-dev-useast-2026_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "adf-orders-dev-useast-2026_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'adf-orders-dev-useast-2026_ArmTemplate_1')]"
 			]
 		}
 	]

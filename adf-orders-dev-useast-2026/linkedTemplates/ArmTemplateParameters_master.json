@@ -26,6 +26,12 @@
 		"ls_sqldb_orders_properties_typeProperties_userName": {
 			"value": "sreekanth"
 		},
+		"tw_trigger_properties_pipeline1_parameters_pStart": {
+			"value": "@trigger().outputs.windowStartTime"
+		},
+		"tw_trigger_properties_pipeline1_parameters_pEnd": {
+			"value": "@trigger().outputs.windowEndTime"
+		},
 		"containerUri": {
 			"value": ""
 		},
