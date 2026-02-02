@@ -7,10 +7,6 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "adf-orders-dev-useast-2026"
 		},
-		"ls_dl_orders_raw_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'ls_dl_orders_raw'"
-		},
 		"ls_sqldb_orders_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'ls_sqldb_orders'"
@@ -35,19 +31,109 @@
 			"type": "string",
 			"defaultValue": "sreekanth"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pStart": {
+		"ls_keyvault_properties_typeProperties_baseUrl": {
 			"type": "string",
-			"defaultValue": "@trigger().outputs.windowStartTime"
+			"defaultValue": "https://kv-orders-dev-2026.vault.azure.net/"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pEnd": {
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "@trigger().outputs.windowEndTime"
+			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
 		}
 	},
 	"variables": {
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderStoredProcedureName": "[[dbo].[sp_window_ingest]",
+								"storedProcedureParameters": {
+									"end": {
+										"type": "String",
+										"value": {
+											"value": "@pipeline().parameters.pEnd",
+											"type": "Expression"
+										}
+									},
+									"start": {
+										"type": "String",
+										"value": {
+											"value": "@pipeline().parameters.pStart",
+											"type": "Expression"
+										}
+									}
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_source_sql",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_sink_sql",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pStart": {
+						"type": "string"
+					},
+					"pEnd": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_source_sql')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sink_sql')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_cleansed_to_structured')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -1215,6 +1301,68 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_sink_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "window_name",
+						"type": "varchar"
+					},
+					{
+						"name": "window_time",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "tw_sink"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_source_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "window_name",
+						"type": "varchar"
+					},
+					{
+						"name": "window_time",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "tw_source"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_structured_orders')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -1564,12 +1712,18 @@
 				"typeProperties": {
 					"url": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]",
 					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('ls_dl_orders_raw_accountKey')]"
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ls_keyvault",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "akv-accountkey"
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_keyvault')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ls_sqldb_orders')]",
@@ -1605,48 +1759,6 @@
 				}
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ScheduleMasterPipelineOrders_pl_master')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_master",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Week",
-						"interval": 2,
-						"startTime": "2026-01-28T20:52:00",
-						"endTime": "2026-02-03T20:52:00",
-						"timeZone": "Eastern Standard Time",
-						"schedule": {
-							"minutes": [
-								30
-							],
-							"hours": [
-								12
-							],
-							"weekDays": [
-								"Monday"
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_master')]"
-			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/df_cleansed_to_structured')]",
@@ -2372,188 +2484,89 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Copy data1",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderStoredProcedureName": "[[dbo].[sp_window_ingest]",
-								"storedProcedureParameters": {
-									"end": {
-										"type": "String",
-										"value": {
-											"value": "@pipeline().parameters.pEnd",
-											"type": "Expression"
-										}
-									},
-									"start": {
-										"type": "String",
-										"value": {
-											"value": "@pipeline().parameters.pStart",
-											"type": "Expression"
-										}
-									}
-								},
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "ds_source_sql",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "ds_sink_sql",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"pStart": {
-						"type": "string"
-					},
-					"pEnd": {
-						"type": "string"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_source_sql')]",
-				"[concat(variables('factoryId'), '/datasets/ds_sink_sql')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_source_sql')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_sqldb_orders",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "window_name",
-						"type": "varchar"
-					},
-					{
-						"name": "window_time",
-						"type": "datetime2",
-						"scale": 7
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "tw_source"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_sink_sql')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_sqldb_orders",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "window_name",
-						"type": "varchar"
-					},
-					{
-						"name": "window_time",
-						"type": "datetime2",
-						"scale": 7
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "tw_sink"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/tw_trigger')]",
+			"name": "[concat(parameters('factoryName'), '/ScheduleMasterPipelineOrders_pl_master')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Started",
+				"runtimeState": "Stopped",
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "pipeline1",
+							"referenceName": "pl_master",
 							"type": "PipelineReference"
 						},
-						"parameters": {
-							"pStart": "[parameters('tw_trigger_properties_pipeline1_parameters_pStart')]",
-							"pEnd": "[parameters('tw_trigger_properties_pipeline1_parameters_pEnd')]"
-						}
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
 				"typeProperties": {
 					"recurrence": {
-						"frequency": "Minute",
-						"interval": 5,
-						"startTime": "2026-02-01T02:13:00",
-						"timeZone": "Eastern Standard Time"
+						"frequency": "Week",
+						"interval": 2,
+						"startTime": "2026-01-28T20:52:00",
+						"endTime": "2026-02-03T20:52:00",
+						"timeZone": "Eastern Standard Time",
+						"schedule": {
+							"minutes": [
+								30
+							],
+							"hours": [
+								12
+							],
+							"weekDays": [
+								"Monday"
+							]
+						}
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pipeline1')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_master')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_keyvault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('ls_keyvault_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/credential-uami-orders')]",
+			"type": "Microsoft.DataFactory/factories/credentials",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {
+					"resourceId": "/subscriptions/c402696c-d057-4679-8023-22c417bbbba9/resourceGroups/rg-orders-dev-useast/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uami-orders"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"credential": {
+						"referenceName": "credential-uami-orders",
+						"type": "CredentialReference"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/credential-uami-orders')]"
 			]
 		}
 	]

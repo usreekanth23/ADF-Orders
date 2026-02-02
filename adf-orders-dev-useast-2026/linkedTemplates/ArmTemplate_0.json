@@ -7,10 +7,6 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "adf-orders-dev-useast-2026"
 		},
-		"ls_dl_orders_raw_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'ls_dl_orders_raw'"
-		},
 		"ls_sqldb_orders_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'ls_sqldb_orders'"
@@ -18,10 +14,6 @@
 		"ls_st_orders_landing_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'ls_st_orders_landing'"
-		},
-		"ls_dl_orders_raw_properties_typeProperties_url": {
-			"type": "string",
-			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
 		},
 		"ls_sqldb_orders_properties_typeProperties_server": {
 			"type": "string",
@@ -34,29 +26,24 @@
 		"ls_sqldb_orders_properties_typeProperties_userName": {
 			"type": "string",
 			"defaultValue": "sreekanth"
+		},
+		"ls_keyvault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://kv-orders-dev-2026.vault.azure.net/"
+		},
+		"ls_dl_orders_raw_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
 		}
 	},
 	"variables": {
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_dl_orders_raw')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]",
-					"accountKey": {
-						"type": "SecureString",
-						"value": "[parameters('ls_dl_orders_raw_accountKey')]"
-					}
-				}
-			},
-			"dependsOn": []
-		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ls_sqldb_orders')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -93,223 +80,29 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_analytics_product_orders_monthly')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/ls_keyvault')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "05 Analytics"
-				},
 				"annotations": [],
-				"type": "DelimitedText",
+				"type": "AzureKeyVault",
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "product_orders_monthly.csv",
-						"folderPath": "product_orders_monthly",
-						"fileSystem": "analytics"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": []
+					"baseUrl": "[parameters('ls_keyvault_properties_typeProperties_baseUrl')]"
+				}
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
+			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_analytics_store_orders_monthly')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/credential-uami-orders')]",
+			"type": "Microsoft.DataFactory/factories/credentials",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "05 Analytics"
-				},
-				"annotations": [],
-				"type": "DelimitedText",
+				"type": "ManagedIdentity",
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "store_orders_monthly.csv",
-						"folderPath": "store_orders_monthly",
-						"fileSystem": "analytics"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": []
+					"resourceId": "/subscriptions/c402696c-d057-4679-8023-22c417bbbba9/resourceGroups/rg-orders-dev-useast/providers/Microsoft.ManagedIdentity/userAssignedIdentities/uami-orders"
+				}
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_cleansed_customers')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "03 Cleansed"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": {
-							"value": "@concat('customers/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-							"type": "Expression"
-						},
-						"fileSystem": "cleansed"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_cleansed_order_items')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "03 Cleansed"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": {
-							"value": "@concat('order_items/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-							"type": "Expression"
-						},
-						"fileSystem": "cleansed"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_cleansed_orders')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "03 Cleansed"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": {
-							"value": "@concat('orders/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-							"type": "Expression"
-						},
-						"fileSystem": "cleansed"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_cleansed_products')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "03 Cleansed"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": {
-							"value": "@concat('products/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-							"type": "Expression"
-						},
-						"fileSystem": "cleansed"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_cleansed_stores')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "03 Cleansed"
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"folderPath": {
-							"value": "@concat('stores/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
-							"type": "Expression"
-						},
-						"fileSystem": "cleansed"
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ds_landing_customers')]",
@@ -539,38 +332,377 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_raw_customers')]",
+			"name": "[concat(parameters('factoryName'), '/ds_sink_sql')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
+					"referenceName": "ls_sqldb_orders",
 					"type": "LinkedServiceReference"
 				},
-				"folder": {
-					"name": "02 Raw"
-				},
 				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "customers.json",
-						"folderPath": {
-							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
-							"type": "Expression"
-						},
-						"fileSystem": "raw"
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "window_name",
+						"type": "varchar"
+					},
+					{
+						"name": "window_time",
+						"type": "datetime2",
+						"scale": 7
 					}
-				},
-				"schema": {}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "tw_sink"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_raw_order_items')]",
+			"name": "[concat(parameters('factoryName'), '/ds_source_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "window_name",
+						"type": "varchar"
+					},
+					{
+						"name": "window_time",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "tw_source"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_structured_orders_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "04 Structured"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "ORDER_ITEM_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ORDER_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ORDER_DATE",
+						"type": "date"
+					},
+					{
+						"name": "CUSTOMER_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ORDER_STATUS",
+						"type": "varchar"
+					},
+					{
+						"name": "STORE_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "PRODUCT_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "UNIT_PRICE",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					},
+					{
+						"name": "QUANTITY",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "SUBTOTAL",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					},
+					{
+						"name": "UPDATED_TIMESTAMP",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "ORDERS",
+					"table": "ORDERS"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_structured_products_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "04 Structured"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "PRODUCT_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "PRODUCT_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "UNIT_PRICE",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					},
+					{
+						"name": "UPDATED_TIMESTAMP",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "ORDERS",
+					"table": "PRODUCTS"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_structured_stores_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_sqldb_orders",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "04 Structured"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "STORE_ID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "STORE_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "LATITUDE",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					},
+					{
+						"name": "LONGITUDE",
+						"type": "decimal",
+						"precision": 18,
+						"scale": 0
+					},
+					{
+						"name": "UPDATED_TIMESTAMP",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "ORDERS",
+					"table": "STORES"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_sqldb_orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_dl_orders_raw')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "ls_keyvault",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "akv-accountkey"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_keyvault')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"credential": {
+						"referenceName": "credential-uami-orders",
+						"type": "CredentialReference"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/credential-uami-orders')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderStoredProcedureName": "[[dbo].[sp_window_ingest]",
+								"storedProcedureParameters": {
+									"end": {
+										"type": "String",
+										"value": {
+											"value": "@pipeline().parameters.pEnd",
+											"type": "Expression"
+										}
+									},
+									"start": {
+										"type": "String",
+										"value": {
+											"value": "@pipeline().parameters.pStart",
+											"type": "Expression"
+										}
+									}
+								},
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_source_sql",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_sink_sql",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pStart": {
+						"type": "string"
+					},
+					"pEnd": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_source_sql')]",
+				"[concat(variables('factoryId'), '/datasets/ds_sink_sql')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_analytics_product_orders_monthly')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -579,19 +711,16 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "02 Raw"
+					"name": "05 Analytics"
 				},
 				"annotations": [],
 				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "order_items.txt",
-						"folderPath": {
-							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
-							"type": "Expression"
-						},
-						"fileSystem": "raw"
+						"fileName": "product_orders_monthly.csv",
+						"folderPath": "product_orders_monthly",
+						"fileSystem": "analytics"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
@@ -605,7 +734,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_raw_orders')]",
+			"name": "[concat(parameters('factoryName'), '/ds_analytics_store_orders_monthly')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -614,21 +743,21 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "02 Raw"
+					"name": "05 Analytics"
 				},
 				"annotations": [],
-				"type": "Parquet",
+				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "orders.parquet",
-						"folderPath": {
-							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
-							"type": "Expression"
-						},
-						"fileSystem": "raw"
+						"fileName": "store_orders_monthly.csv",
+						"folderPath": "store_orders_monthly",
+						"fileSystem": "analytics"
 					},
-					"compressionCodec": "snappy"
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
 				},
 				"schema": []
 			},
@@ -637,7 +766,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_raw_products')]",
+			"name": "[concat(parameters('factoryName'), '/ds_cleansed_customers')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -646,53 +775,22 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "02 Raw"
+					"name": "03 Cleansed"
 				},
 				"annotations": [],
-				"type": "Json",
+				"type": "Parquet",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobFSLocation",
-						"fileName": "products.json",
 						"folderPath": {
-							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
+							"value": "@concat('customers/',formatDateTime(utcNow(),'yyyy-MM-dd'))",
 							"type": "Expression"
 						},
-						"fileSystem": "raw"
-					}
+						"fileSystem": "cleansed"
+					},
+					"compressionCodec": "snappy"
 				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_raw_stores')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_dl_orders_raw",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "02 Raw"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": "stores.json",
-						"folderPath": {
-							"value": "@formatDateTime(utcNow(),'yyyy-MM-dd')",
-							"type": "Expression"
-						},
-						"fileSystem": "raw"
-					}
-				},
-				"schema": {}
+				"schema": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_dl_orders_raw')]"

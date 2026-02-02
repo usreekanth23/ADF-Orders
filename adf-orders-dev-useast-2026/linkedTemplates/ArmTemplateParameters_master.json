@@ -5,9 +5,6 @@
 		"factoryName": {
 			"value": "adf-orders-dev-useast-2026"
 		},
-		"ls_dl_orders_raw_accountKey": {
-			"value": ""
-		},
 		"ls_sqldb_orders_password": {
 			"value": ""
 		},
@@ -26,11 +23,11 @@
 		"ls_sqldb_orders_properties_typeProperties_userName": {
 			"value": "sreekanth"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pStart": {
-			"value": "@trigger().outputs.windowStartTime"
+		"ls_keyvault_properties_typeProperties_baseUrl": {
+			"value": "https://kv-orders-dev-2026.vault.azure.net/"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pEnd": {
-			"value": "@trigger().outputs.windowEndTime"
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://dlordersadf2026.dfs.core.windows.net/"
 		},
 		"containerUri": {
 			"value": ""

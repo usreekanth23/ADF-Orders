@@ -7,10 +7,6 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "adf-orders-dev-useast-2026"
 		},
-		"ls_dl_orders_raw_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'ls_dl_orders_raw'"
-		},
 		"ls_sqldb_orders_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'ls_sqldb_orders'"
@@ -35,13 +31,13 @@
 			"type": "string",
 			"defaultValue": "sreekanth"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pStart": {
+		"ls_keyvault_properties_typeProperties_baseUrl": {
 			"type": "string",
-			"defaultValue": "@trigger().outputs.windowStartTime"
+			"defaultValue": "https://kv-orders-dev-2026.vault.azure.net/"
 		},
-		"tw_trigger_properties_pipeline1_parameters_pEnd": {
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
 			"type": "string",
-			"defaultValue": "@trigger().outputs.windowEndTime"
+			"defaultValue": "https://dlordersadf2026.dfs.core.windows.net/"
 		},
 		"containerUri": {
 			"type": "string",
@@ -70,17 +66,11 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
-					"ls_dl_orders_raw_accountKey": {
-						"value": "[parameters('ls_dl_orders_raw_accountKey')]"
-					},
 					"ls_sqldb_orders_password": {
 						"value": "[parameters('ls_sqldb_orders_password')]"
 					},
 					"ls_st_orders_landing_connectionString": {
 						"value": "[parameters('ls_st_orders_landing_connectionString')]"
-					},
-					"ls_dl_orders_raw_properties_typeProperties_url": {
-						"value": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]"
 					},
 					"ls_sqldb_orders_properties_typeProperties_server": {
 						"value": "[parameters('ls_sqldb_orders_properties_typeProperties_server')]"
@@ -90,6 +80,15 @@
 					},
 					"ls_sqldb_orders_properties_typeProperties_userName": {
 						"value": "[parameters('ls_sqldb_orders_properties_typeProperties_userName')]"
+					},
+					"ls_keyvault_properties_typeProperties_baseUrl": {
+						"value": "[parameters('ls_keyvault_properties_typeProperties_baseUrl')]"
+					},
+					"ls_dl_orders_raw_properties_typeProperties_url": {
+						"value": "[parameters('ls_dl_orders_raw_properties_typeProperties_url')]"
+					},
+					"AzureDataLakeStorage1_properties_typeProperties_url": {
+						"value": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]"
 					}
 				}
 			},
@@ -108,12 +107,6 @@
 				"parameters": {
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
-					},
-					"tw_trigger_properties_pipeline1_parameters_pStart": {
-						"value": "[parameters('tw_trigger_properties_pipeline1_parameters_pStart')]"
-					},
-					"tw_trigger_properties_pipeline1_parameters_pEnd": {
-						"value": "[parameters('tw_trigger_properties_pipeline1_parameters_pEnd')]"
 					}
 				}
 			},
