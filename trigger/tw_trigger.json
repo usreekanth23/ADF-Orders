@@ -1,0 +1,28 @@
+{
+	"name": "tw_trigger",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pipeline1",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"pStart": "@trigger().outputs.windowStartTime",
+					"pEnd": "@trigger().outputs.windowEndTime"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 5,
+				"startTime": "2026-02-02T02:13:00",
+				"timeZone": "Eastern Standard Time"
+			}
+		}
+	}
+}
